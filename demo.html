@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+   <head>
+      <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+      <title>Raphael SVG Import - Interactive demo</title>
+      <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js" type="text/javascript" charset="utf-8"></script>
+      <script src="js/raphael-min.js" type="text/javascript" charset="utf-8"></script>
+      <script src="js/raphael-svg-import.js" type="text/javascript" charset="utf-8"></script>
+      <script>
+         // Must use file extension ".XML" for IE support!
+         jQuery(document).ready(function(){
+            jQuery.ajax({
+               type: "GET",
+               url: "images/us-map.svg",
+               dataType: "xml",
+               success: parseXml
+            });
+         });
+
+         // High-order functions make the code more concise.
+         function forEach(array, action /*, extra args*/) {
+            for (var i = 0; i < array.length; i++) {
+               var args = Array.prototype.slice.call(arguments);
+               args.splice(0, 2, array[i]);
+               action.apply(array[i], args);
+            }
+         } 
+
+         // Reuse this function to generate consistent animation effect.
+         function animateEffect(elem, attr, duration) {
+            elem.animate(attr, duration);
+         }
+
+         // make a { state: element } dictionary for the set
+         // e.g. { NY: element }
+         function indexSetElements(rSet) {
+            var indexedSet = {};
+            for (var i = 0; i < rSet.length; i++) {
+               var key = $(rSet[i].node).attr('id');
+               indexedSet[key] = rSet[i];
+            }
+            return indexedSet;
+         }
+
+         function parseXml(svgXML) {
+            var R = Raphael("paper", 800, 500);
+            var map = R.importSVG(svgXML).transform("s0.8,0.8,0,0");
+            var iMap = indexSetElements(map);
+
+            var stateAttr = {
+               fill: "#666",
+               stroke: "#AAA",
+               "stroke-width": 1,
+               "stroke-linejoin": "round"
+            };
+
+            var labelAttr = {
+               fill: "#FFF",
+               stroke: "#FFF", 
+               "stroke-width": 1, 
+               "stroke-linejoin": "round"
+            };
+
+            var lineAttr = {
+               fill: "none",
+               stroke: "#444",
+               "stroke-width": 1,
+               "stroke-linejoin": "round"
+            };
+
+            // Generate an array of interactive groups
+            var iGroups = [];
+            for (var key in iMap) {
+               var iGroup = []; 
+               if (key in states)      iGroup.push( iMap[key] );
+               if (key in smallStates) iGroup.push( iMap[key + "-rect"] );
+               if (iGroup.length > 0)  iGroups.push(iGroup);
+            }
+
+            // Register event handlers to interactive elements
+            forEach(iGroups, function(group) {
+               group.color = Raphael.getColor();
+               forEach(group, function(item) {
+                  item.attr(stateAttr);
+                  item[0].style.cursor = "pointer";
+                  item[0].onmouseover = function() {
+                     forEach(group, animateEffect, {fill: group.color}, 500);
+                     R.safari();
+                  };
+                  item[0].onmouseout = function() {
+                     forEach(group, animateEffect, stateAttr, 500);
+                     R.safari();
+                  };
+               });
+            });
+         }
+
+         var smallStates = { 
+            NJ: "NJ-rect",  
+            VT: "VT-rect", 
+            NH: "NJ-rect", 
+            MA: "MA-rect", 
+            RI: "RI-rect",
+            CT: "CT-rect",
+            DE: "DE-rect",
+            MD: "MD-rect",
+            DC: "DC-rect"
+         };
+
+         var states = {
+            AL: "Alabama", 
+            AK: "Alaska", 
+            AZ: "Arizona", 
+            AR: "Arkansas", 
+            CA: "California", 
+            CO: "Colorado", 
+            CT: "Connecticut", 
+            DE: "Delaware", 
+            DC: "District Of Columbia", 
+            FL: "Florida", 
+            GA: "Georgia", 
+            HI: "Hawaii", 
+            ID: "Idaho", 
+            IL: "Illinois", 
+            IN: "Indiana", 
+            IA: "Iowa", 
+            KS: "Kansas", 
+            KY: "Kentucky", 
+            LA: "Louisiana", 
+            ME: "Maine", 
+            MD: "Maryland", 
+            MA: "Massachusetts", 
+            MI: "Michigan", 
+            MN: "Minnesota", 
+            MS: "Mississippi", 
+            MO: "Missouri", 
+            MT: "Montana",
+            NE: "Nebraska",
+            NV: "Nevada",
+            NH: "New Hampshire",
+            NJ: "New Jersey",
+            NM: "New Mexico",
+            NY: "New York",
+            NC: "North Carolina",
+            ND: "North Dakota",
+            OH: "Ohio", 
+            OK: "Oklahoma", 
+            OR: "Oregon", 
+            PA: "Pennsylvania", 
+            RI: "Rhode Island", 
+            SC: "South Carolina", 
+            SD: "South Dakota",
+            TN: "Tennessee", 
+            TX: "Texas", 
+            UT: "Utah", 
+            VT: "Vermont", 
+            VA: "Virginia", 
+            WA: "Washington", 
+            WV: "West Virginia", 
+            WI: "Wisconsin", 
+            WY: "Wyoming"
+         };
+      </script>
+   </head>
+   <body> 
+      <div id="paper"></div>
+   </body>
+</html>
